@@ -882,7 +882,7 @@ int main(int argc, char** argv)
     bool args_ok = false;
 
     // First up, check command line args
-    // Only supported usage is ./llr_wrapper [-t N] (multithreading)
+    // Only supported usage is ./llr_wrapper [-t N] | [--nthreads N] (multithreading)
 
     if (argc == 1)
     {
@@ -890,19 +890,19 @@ int main(int argc, char** argv)
     }
     else if (argc == 3)
     {
-        if (strcmp(argv[1], "-t") == 0)
+        if (strcmp(argv[1], "-t") == 0 || strcmp(argv[1], "--nthreads") == 0)
         {
             char str1[132], end[10];
             sprintf(str1, "%send", argv[2]);
             if (sscanf(str1, "%d%s", &(t.nthreads), (char*)&end) != 2)
             {
-                std::cerr << "-t requires a number" << std::endl;
+                std::cerr << argv[1] << " requires a number" << std::endl;
             }
             else
             {
                 if (t.nthreads < 1)
                 {
-                    std::cerr << "Number of threads (-t) must be >= 1" << std::endl;
+                    std::cerr << "Number of threads (" << argv[1] << ") must be >= 1" << std::endl;
                 }
                 else
                 {
@@ -918,7 +918,7 @@ int main(int argc, char** argv)
 
     if (!args_ok)
     {
-        std::cerr << "Usage: " << argv[0] << " [-t N]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " [-t N] | [--nthreads N]" << std::endl;
         boinc_finish(ERR_INVALID_ARGS);
     }
    
