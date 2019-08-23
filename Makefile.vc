@@ -1,0 +1,57 @@
+
+VERSION=8.04
+
+BOINC_BASE = \Work\GitHub\boinc-v2
+
+CPPFLAGS = $(CPPFLAGS) -nologo -c -O1 -GS- -W4
+CPPFLAGS = $(CPPFLAGS) -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE -D__WIN32
+CPPFLAGS = $(CPPFLAGS) -DBITNESS=$(BITS) -DWRAPPER_VERSION="$(VERSION)"
+
+!ifdef VERBOSE
+CPPFLAGS = $(CPPFLAGS) -DVERBOSE
+!endif
+LINKCMD = cl -nologo -Fm -Fe$@ $**
+LINKCMD = $(LINKCMD) /link /DYNAMICBASE:NO
+
+# MSVC2010 sets this for 64-bit command prompt. If not, define it on MAKE's command line.
+!if "$(PLATFORM)" == "X64"
+
+BITS=64
+ARCH=windows_x86_64
+
+obj = output_w64
+BOINC_LIB  = $(BOINC_BASE)/win_build/Build/x64/Release
+
+!else
+
+BITS=32
+ARCH=windows_intelx86
+
+obj = output_w32
+BOINC_LIB  = $(BOINC_BASE)/win_build/Build/Win32/Release
+# This will make program built with VC2010 compatible with Windows 2000
+EXTRA_OBJ  = $(obj)/vc2010_w2k.obj
+LINKCMD    = $(LINKCMD) /SUBSYSTEM:CONSOLE,5.00
+
+!endif
+
+exe = primegrid_llr_wrapper_$(VERSION)_$(ARCH).exe
+
+all: $(obj) $(exe)
+
+$(obj):
+	md $@
+
+$(exe): $(obj)/wrapper.obj $(EXTRA_OBJ)
+	$(LINKCMD) $(BOINC_LIB)/libboincapi_staticcrt.LIB $(BOINC_LIB)/libboinc_staticcrt.LIB USER32.LIB ADVAPI32.LIB SHELL32.LIB
+
+$(obj)/wrapper.obj: wrapper.C
+	$(CC) -TP $(CPPFLAGS) -I$(BOINC_BASE) -I$(BOINC_BASE)/api -I$(BOINC_BASE)/lib -Fo$@ $**
+
+$(obj)/vc2010_w2k.obj: vc2010_w2k.asm
+	ml /nologo /c -Fo$@ $**
+
+clean:
+	-if exist $(obj)\*.obj del $(obj)\*.obj
+	-if exist *.map del *.map
+	-if exist *.exe del *.exe
