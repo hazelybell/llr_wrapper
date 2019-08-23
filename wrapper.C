@@ -42,6 +42,12 @@
 #include "error_numbers.h" 
 #include "version.h" 
 
+#define API_VERSION (BOINC_MAJOR_VERSION * 10000 + BOINC_MINOR_VERSION * 100 + BOINC_RELEASE)
+
+#if API_VERSION >= 61302
+#include "proc_control.h"
+#endif
+
 #ifndef BITNESS
 #error "BITNESS must be defined e.g. 64 or 32"
 #endif
@@ -545,19 +551,27 @@ void TASK::terminate()
 
 void TASK::suspend()
 {
+#if API_VERSION >= 61302
+    suspend_or_resume_process(pid, false);
+#else
 #ifdef _WIN32
     suspend_or_resume_threads(pid, 0, false);
 #else
     ::kill(pid, SIGSTOP);
 #endif
+#endif
 }
 
 void TASK::resume()
 {
+#if API_VERSION >= 61302
+    suspend_or_resume_process(pid, true);
+#else
 #ifdef _WIN32
     suspend_or_resume_threads(pid, 0, true);
 #else
     ::kill(pid, SIGCONT);
+#endif
 #endif
 }
 
@@ -719,7 +733,6 @@ double TASK::read_status()
             const char *fft_key[] = {"Using"};
             const char *iter_key[] = {"iteration :", "bit:", "Iter:", "Bit:"};
             char *str,*end;
-            char *line;
             size_t i;
             char ch;
             int x, y;
@@ -870,7 +883,7 @@ int main(int argc, char** argv)
     options.main_program = true;
     options.check_heartbeat = true;
     options.handle_process_control = true;
-#if BOINC_MAJOR_VERSION < 7 || (BOINC_MAJOR_VERSION == 7 && BOINC_MINOR_VERSION < 5)
+#if API_VERSION < 70500
     options.handle_trickle_ups = true;
 #endif
 
