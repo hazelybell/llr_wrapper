@@ -985,11 +985,32 @@ int main(int argc, char** argv)
         if (t.poll(status))
         {
 #ifndef _WIN32
-            int child_ret_val = WEXITSTATUS(status);
-            if (child_ret_val)
+            if (WIFEXITED(status)) 
             {
-                std::cerr << "app error: " <<  status << std::endl;
-                boinc_finish(status);
+                // process exited by calling exit() or returning from main
+                int child_ret_val = WEXITSTATUS(status);
+                std::cerr << "LLR exited with code: " 
+                    <<  child_ret_val << std::endl;
+                if (child_ret_val != 0) { 
+                    // LLR exited with a non-zero exit status
+                    boinc_finish(child_ret_val);
+                }
+            }
+            else if (WIFSIGNALED(status))
+            {
+                int signal_number = WTERMSIG(status);
+                std::cerr << "LLR got signal: " 
+                    << signal_number
+                    << " "
+                    << strsignal(signal_number)
+                    << std::endl;
+                // The boinc client already has code to handle workers dying by
+                // various signals, so let it do so by imitating the signal llr
+                // recieved: for example, this will prevent workers who recieve
+                // SIGTERM during shutdown from being reported as errors or
+                // invalid results.
+                // see: https://github.com/BOINC/boinc/blob/client_release/7/7.16/client/app_control.cpp#L561
+                kill(getpid(), signal_number); // suicide by imitation
             }
 #endif
             break;

@@ -13,7 +13,7 @@ CXXFLAGS = -g \
     -DBITNESS=$(BITS) \
     -DWRAPPER_VERSION="$(VERSION)"
 
-LDFLAGS = -static -m64 \
+LDFLAGS = -m64 \
     -L$(BOINC_DIR)/lib
 
 PROG = primegrid_llr_wrapper_$(VERSION)_$(ARCH)
