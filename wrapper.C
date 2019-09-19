@@ -1011,6 +1011,9 @@ int main(int argc, char** argv)
                 // invalid results.
                 // see: https://github.com/BOINC/boinc/blob/client_release/7/7.16/client/app_control.cpp#L561
                 kill(getpid(), signal_number); // suicide by imitation
+                // this code should be unreachable
+                // just in case, fall back calling boinc_finish
+                boinc_finish(signal_number);
             }
 #endif
             break;
